@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Local data — never commit metrics or captured anything
+*.db
+*.sqlite
+*.sqlite3
+data/
+captures/
+
+# Env / IDE
+.env
+.vscode/
+.idea/
+.DS_Store
