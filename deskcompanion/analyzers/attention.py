@@ -22,13 +22,19 @@ def _eye_signals(lm, eye):
 class AttentionAnalyzer:
     def __init__(self):
         self.mesh = mp.solutions.face_mesh.FaceMesh(refine_landmarks=True, max_num_faces=1)
+        self.last_box: dict[str, tuple] = {}  # source -> (x, y, w, h) normalized, for preview
 
     def analyze(self, source: str, frame: np.ndarray) -> list[Metric]:
         res = self.mesh.process(frame[:, :, ::-1])
         if not res.multi_face_landmarks:
+            self.last_box.pop(source, None)
             return [Metric(source, "presence", 0.0),
                     Metric(source, "focus", 0.0)]
         lm = res.multi_face_landmarks[0].landmark
+        xs = [p.x for p in lm]
+        ys = [p.y for p in lm]
+        box_w, box_h = max(xs) - min(xs), max(ys) - min(ys)
+        self.last_box[source] = (min(xs), min(ys), box_w, box_h)
         open_l, gaze_l = _eye_signals(lm, L_EYE)
         open_r, gaze_r = _eye_signals(lm, R_EYE)
         eye_open = (open_l + open_r) / 2          # ~0.3 open, <0.12 closed
@@ -41,7 +47,8 @@ class AttentionAnalyzer:
                 Metric(source, "gaze", gaze),
                 Metric(source, "focus", focus),
                 Metric(source, "face_x", nose.x),
-                Metric(source, "face_y", nose.y)]
+                Metric(source, "face_y", nose.y),
+                Metric(source, "face_size", box_w)]  # width fraction ~ closeness to screen
 
 
 def demo():
@@ -50,6 +57,7 @@ def demo():
     blank = np.zeros((480, 640, 3), np.uint8)
     out = {m.signal: m.value for m in a.analyze("test", blank)}
     assert out == {"presence": 0.0, "focus": 0.0}, out
+    assert a.last_box == {}, "no face -> no box"
     print("[attention] OK")
 
 

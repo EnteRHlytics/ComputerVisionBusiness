@@ -40,6 +40,7 @@ def main():
     store = Store(cfg["db_path"])
     store.start_session()
     analyzers = build_analyzers(cfg)
+    attention = next((a for a in analyzers if isinstance(a, AttentionAnalyzer)), None)
     activity = ActivityClassifier(**cfg["activity_rules"]) if cfg["analyzers"].get("activity") else None
     interval = 1.0 / cfg["sample_hz"]
     print(f"[runner] session {store.session_id} started — {len(cams.caps)} camera(s), "
@@ -64,10 +65,20 @@ def main():
                                        for m in metrics if m.signal in ("emotion", "activity", "focus"))
                     cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.6, (0, 255, 0), 2)
+                    h, w = frame.shape[:2]
+                    # face bounding box: green normally, red + warning when too close
+                    if attention and source in attention.last_box:
+                        bx, by, bw, bh = attention.last_box[source]
+                        too_close = bw > cfg["too_close_face_size"]
+                        color = (0, 0, 255) if too_close else (0, 255, 0)
+                        cv2.rectangle(frame, (int(bx * w), int(by * h)),
+                                      (int((bx + bw) * w), int((by + bh) * h)), color, 2)
+                        if too_close:
+                            cv2.putText(frame, "TOO CLOSE TO SCREEN", (10, h - 20),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                     # face tracking trail: dot at current face center, fading line behind it
                     vals = {m.signal: m.value for m in metrics}
                     if "face_x" in vals:
-                        h, w = frame.shape[:2]
                         trails[source].append((int(vals["face_x"] * w), int(vals["face_y"] * h)))
                     trail = trails[source]
                     for i in range(1, len(trail)):

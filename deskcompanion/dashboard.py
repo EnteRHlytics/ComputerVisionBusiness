@@ -30,7 +30,13 @@ df["time"] = pd.to_datetime(df.ts, unit="s")
 # --- wellbeing callouts ---
 slouch = df[(df.signal == "posture_angle") & (df.label == "slouching")]
 activity = df[df.signal == "activity"]
-cols = st.columns(3)
+face_size = df[df.signal == "face_size"]
+cols = st.columns(4)
+if not face_size.empty:
+    too_close_pct = 100 * (face_size.value > CFG["too_close_face_size"]).mean()
+    cols[3].metric("Too close to screen", f"{too_close_pct:.0f}% of session")
+    if too_close_pct > 20:
+        st.warning("You spend a lot of time leaning into the screen — sit back to reduce eye strain.")
 if not slouch.empty:
     pct = 100 * slouch.value.mean()
     cols[0].metric("Slouching", f"{pct:.0f}% of session")
@@ -70,6 +76,10 @@ if not face.empty:
     left.line_chart(pos)  # x/y drift over time — see where the face is going
     # position map in camera coords (y flipped so up on chart = up in reality)
     right.scatter_chart(pos.assign(face_y=1 - pos.face_y), x="face_x", y="face_y")
+    if not face_size.empty:
+        st.caption(f"Screen distance (face width fraction; above "
+                   f"{CFG['too_close_face_size']} = too close)")
+        st.line_chart(face_size.set_index("time").value)
 
 if not activity.empty:
     st.subheader("Activity")

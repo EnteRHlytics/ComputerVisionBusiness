@@ -17,6 +17,9 @@ posture_neutral:
   neck_angle: 15.0        # degrees; slouch threshold = neutral + slouch_margin
   slouch_margin: 12.0
 
+# face box wider than this fraction of the frame -> too close to screen
+too_close_face_size: 0.35
+
 activity_rules:
   away_after_s: 5         # no face this long -> away
   distracted_focus: 0.4   # focus below this -> distracted
