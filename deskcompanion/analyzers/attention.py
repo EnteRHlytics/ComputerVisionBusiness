@@ -1,5 +1,6 @@
 """Attention via MediaPipe Face Mesh (iris refinement on): presence, gaze
-centering, eye-open ratio -> single focus score in [0, 1]."""
+centering, eye-open ratio -> single focus score in [0, 1]. Also emits the
+face center (nose tip, normalized 0-1) as face_x/face_y for tracking."""
 import mediapipe as mp
 import numpy as np
 
@@ -35,9 +36,12 @@ class AttentionAnalyzer:
         eyes_open = min(eye_open / 0.25, 1.0)
         gaze_centered = max(0.0, 1.0 - abs(gaze - 0.5) / 0.25)
         focus = eyes_open * gaze_centered
+        nose = lm[1]  # nose tip = face center, normalized image coords
         return [Metric(source, "presence", 1.0),
                 Metric(source, "gaze", gaze),
-                Metric(source, "focus", focus)]
+                Metric(source, "focus", focus),
+                Metric(source, "face_x", nose.x),
+                Metric(source, "face_y", nose.y)]
 
 
 def demo():

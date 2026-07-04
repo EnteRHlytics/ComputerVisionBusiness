@@ -70,4 +70,5 @@ One flat table: `metrics(session_id, ts, source, signal, value, label)`.
 | `presence` | 0 or 1 | |
 | `gaze` | 0–1 (0.5 = at screen) | |
 | `focus` | 0–1 | |
+| `face_x`, `face_y` | 0–1 (position in frame) | |
 | `activity` | 1 | working / distracted / away |

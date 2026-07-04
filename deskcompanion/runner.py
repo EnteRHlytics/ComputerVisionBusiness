@@ -1,6 +1,7 @@
 """Main loop: capture -> analyzers -> sqlite, throttled to sample_hz.
 Run: python -m deskcompanion.runner   (q in preview window or Ctrl-C to stop)"""
 import time
+from collections import defaultdict, deque
 from pathlib import Path
 
 import cv2
@@ -45,6 +46,7 @@ def main():
           f"{cfg['sample_hz']} Hz. Ctrl-C to stop.")
     frames_done = 0
     t_report = time.time()
+    trails: dict[str, deque] = defaultdict(lambda: deque(maxlen=30))  # face trail per camera
     try:
         while True:
             tick = time.time()
@@ -62,6 +64,16 @@ def main():
                                        for m in metrics if m.signal in ("emotion", "activity", "focus"))
                     cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.6, (0, 255, 0), 2)
+                    # face tracking trail: dot at current face center, fading line behind it
+                    vals = {m.signal: m.value for m in metrics}
+                    if "face_x" in vals:
+                        h, w = frame.shape[:2]
+                        trails[source].append((int(vals["face_x"] * w), int(vals["face_y"] * h)))
+                    trail = trails[source]
+                    for i in range(1, len(trail)):
+                        cv2.line(frame, trail[i - 1], trail[i], (0, 128 + 4 * i, 255 - 8 * i), 2)
+                    if trail and "face_x" in vals:
+                        cv2.circle(frame, trail[-1], 6, (0, 255, 255), -1)
                     cv2.imshow(f"deskcompanion:{source}", frame)
                 frames_done += 1
             if cfg.get("show_preview") and cv2.waitKey(1) & 0xFF == ord("q"):

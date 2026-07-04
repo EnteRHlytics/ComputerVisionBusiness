@@ -62,6 +62,15 @@ if not emotion.empty:
     left.scatter_chart(emotion.assign(emotion=emotion.label), x="time", y="emotion")
     right.bar_chart(emotion.label.value_counts())
 
+face = df[df.signal.isin(["face_x", "face_y"])]
+if not face.empty:
+    st.subheader("Face tracking")
+    pos = face.pivot_table(index="time", columns="signal", values="value")
+    left, right = st.columns([2, 1])
+    left.line_chart(pos)  # x/y drift over time — see where the face is going
+    # position map in camera coords (y flipped so up on chart = up in reality)
+    right.scatter_chart(pos.assign(face_y=1 - pos.face_y), x="face_x", y="face_y")
+
 if not activity.empty:
     st.subheader("Activity")
     left, right = st.columns([2, 1])
