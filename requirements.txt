@@ -1,0 +1,8 @@
+# mediapipe pinned: 0.10.22+ removed the legacy `solutions` API we use
+mediapipe==0.10.21
+# opencv 5 wheels dropped bundled haarcascade xmls; contrib build satisfies mediapipe too
+opencv-contrib-python<5
+onnxruntime
+streamlit
+pyyaml
+pandas

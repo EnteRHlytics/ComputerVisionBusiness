@@ -6,6 +6,7 @@ venv/
 *.egg-info/
 
 # Local data — never commit metrics or captured anything
+models/
 *.db
 *.sqlite
 *.sqlite3

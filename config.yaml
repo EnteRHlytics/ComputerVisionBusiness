@@ -1,0 +1,22 @@
+# Desk Companion config
+cameras:            # name -> /dev/videoN index
+  laptop: 0
+  # pixel: 2        # uncomment when Pixel 7 Pro is connected as webcam
+sample_hz: 2        # analysis rate; capture runs free, analysis is throttled
+db_path: deskcompanion.db
+show_preview: true  # cv2 window with live feed + overlays (never written to disk)
+
+analyzers:
+  emotion: true
+  posture: true
+  attention: true
+  activity: true
+
+# posture calibration: run `python -m deskcompanion.calibrate` to overwrite
+posture_neutral:
+  neck_angle: 15.0        # degrees; slouch threshold = neutral + slouch_margin
+  slouch_margin: 12.0
+
+activity_rules:
+  away_after_s: 5         # no face this long -> away
+  distracted_focus: 0.4   # focus below this -> distracted
